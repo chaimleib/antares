@@ -9,6 +9,9 @@ BUILD := out/cur/ninja -C out/cur
 build:
 	@$(BUILD)
 
+compdb:
+	@$(BUILD) -t compdb > compile_commands.json
+
 .PHONY: test
 test: build
 	scripts/test.py
