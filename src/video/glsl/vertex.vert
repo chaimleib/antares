@@ -17,7 +17,7 @@
 // License along with Antares.  If not, see http://www.gnu.org/licenses/
 
 #if __VERSION__ == 330
-#elif __VERSION__ == 110
+#elif __VERSION__ == 110 || __VERSION__ == 140
 # define in attribute
 # define out varying
 #else

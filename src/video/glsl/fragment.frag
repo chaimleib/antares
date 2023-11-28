@@ -20,7 +20,7 @@
 out vec4 frag_color;
 # define texture2D texture
 # define texture2DRect texture
-#elif __VERSION__ == 110
+#elif __VERSION__ == 110 || __VERSION__ == 140
 # define in varying
 # define frag_color gl_FragColor
 #else

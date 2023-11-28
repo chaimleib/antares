@@ -61,7 +61,8 @@ void usage(pn::output_view out, pn::string_view progname, int retcode) {
             "\n  options:"
             "\n    -o, --output=OUTPUT  place output in this directory"
             "\n    -t, --text           produce text output"
-            "\n        --opengl=2.0|3.2 select OpenGL version (default: 3.2)"
+            "\n        --opengl=2.0|3.1|3.2"
+            "\n                         select OpenGL version (default: 3.2)"
             "\n    -h, --help           display this help screen"
             "\n",
             progname);
@@ -104,6 +105,9 @@ void main(int argc, char* const* argv) {
             if (get_value() == "2.0") {
                 gl_version   = {2, 0};
                 glsl_version = "110";
+            } else if (get_value() == "3.1") {
+                gl_version   = {3, 1};
+                glsl_version = "140";
             } else if (get_value() == "3.2") {
                 gl_version   = {3, 2};
                 glsl_version = "330 core";
