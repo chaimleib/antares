@@ -48,6 +48,7 @@ namespace antares {
 static constexpr char kCancelButton[]       = "cancel";
 static constexpr char kDoneButton[]         = "done";
 static constexpr char kKeyControlsButton[]  = "key-controls";
+static constexpr char kVideoControlButton[] = "video-control";
 static constexpr char kSoundControlButton[] = "options";
 
 static constexpr char kGameMusicButton[] = "music-during-action";
@@ -56,6 +57,10 @@ static constexpr char kIdleMusicButton[] = "music-during-interlude";
 static constexpr char kVolUpButton[]   = "volume-up";
 static constexpr char kVolDownButton[] = "volume-down";
 static constexpr char kVolRect[]       = "volume";
+
+static constexpr char kFullscreenButton[]       = "fullscreen";
+static constexpr char kRequireRestartTextRect[] = "require-restart";
+static const int16_t kRequireRestartString = 18;
 
 static constexpr char        kTabBox[] = "tabs";
 static constexpr const char* kTabs[]   = {
@@ -118,6 +123,8 @@ void OptionsScreen::become_front() {
 
         case KEY_CONTROL: stack()->push(new KeyControlScreen(&_state)); break;
 
+        case VIDEO_CONTROL: stack()->push(new VideoControlScreen(&_state, &_revert)); break;
+
         case ACCEPT: stack()->pop(this); break;
 
         case CANCEL:
@@ -179,6 +186,14 @@ SoundControlScreen::SoundControlScreen(OptionsScreen::State* state)
                     },
             });
 
+    button(kVideoControlButton)
+            ->bind({
+                    [this] {
+                        *_state = OptionsScreen::VIDEO_CONTROL;
+                        stack()->pop(this);
+                    },
+            });
+
     button(kKeyControlsButton)
             ->bind({
                     [this] {
@@ -212,6 +227,77 @@ void SoundControlScreen::overlay() const {
         rects.fill(notch, color);
         notch.offset(notch_width, 0);
     }
+}
+
+bool VideoControlScreen::_changed_fullscreen = false; // changed since boot?
+
+VideoControlScreen::VideoControlScreen(OptionsScreen::State* state, Preferences *revert)
+        : InterfaceScreen("options/video", {0, 0, 640, 480}), _state(state), _revert(revert) {
+    update_require_restart();
+
+    checkbox(kFullscreenButton)
+            ->bind({
+                    [] { return sys.prefs->fullscreen(); },
+                    [this](bool on) {
+                        sys.prefs->set_fullscreen(on);
+                        _changed_fullscreen = !_changed_fullscreen;
+                        update_require_restart();
+                    },
+            });
+
+    button(kDoneButton)
+            ->bind({
+                    [this] {
+                        *_state = OptionsScreen::ACCEPT;
+                        stack()->pop(this);
+                    },
+            });
+
+    button(kCancelButton)
+            ->bind({
+                    [this] {
+                        // last save was different?
+                        if (sys.prefs->fullscreen() != _revert->fullscreen)
+                            _changed_fullscreen = !_changed_fullscreen;
+
+                        *_state = OptionsScreen::CANCEL;
+                        stack()->pop(this);
+                    },
+            });
+
+    button(kKeyControlsButton)
+            ->bind({
+                    [this] {
+                        *_state = OptionsScreen::KEY_CONTROL;
+                        stack()->pop(this);
+                    },
+            });
+
+    button(kSoundControlButton)
+            ->bind({
+                    [this] {
+                        *_state = OptionsScreen::SOUND_CONTROL;
+                        stack()->pop(this);
+                    },
+            });
+}
+
+VideoControlScreen::~VideoControlScreen() {}
+
+void VideoControlScreen::overlay() const {
+    if (_require_restart) {
+        pn::string text(sys.messages.at(kRequireRestartString).c_str());
+
+        const TextRect& box    = dynamic_cast<const TextRect&>(*widget(kRequireRestartTextRect));
+        Rect            bounds = box.inner_bounds();
+        Point           off    = offset();
+        bounds.offset(off.h, off.v);
+        draw_text_in_rect(bounds, text, box.style(), box.hue());
+    }
+}
+
+void VideoControlScreen::update_require_restart() {
+    _require_restart = _changed_fullscreen;
 }
 
 static const usecs kFlashTime = ticks(12);
